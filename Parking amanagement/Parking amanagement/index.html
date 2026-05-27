@@ -1,0 +1,1675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced 3D Parking Management System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #1a202c;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.3) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.3) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-logo {
+            font-size: 4rem;
+            color: #ffffff;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .loading-text {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            font-weight: 500;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .loading-bar {
+            width: 250px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57);
+            width: 0%;
+            animation: loading 2s ease-in-out infinite;
+            border-radius: 10px;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; }
+            50% { width: 100%; }
+            100% { width: 0%; }
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .logo h1 {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.8rem;
+            background: linear-gradient(45deg, #667eea, #764ba2, #f093fb);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .control-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .control-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .control-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .control-section h3 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 0.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a52);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+        }
+
+        .btn-info {
+            background: linear-gradient(45deg, #4ecdc4, #44a08d);
+            color: white;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.4);
+        }
+
+        .btn-info:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(78, 205, 196, 0.6);
+        }
+
+        .scene-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .scene-container h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.2rem;
+        }
+
+        #threejs-container {
+            width: 100%;
+            height: 500px;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .activity-log {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+
+        .activity-log h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.2rem;
+        }
+
+        .activity-item {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid #667eea;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .activity-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .activity-time {
+            font-size: 0.75rem;
+            color: #6b7280;
+            margin-bottom: 0.25rem;
+        }
+
+        .activity-text {
+            font-size: 0.875rem;
+            color: #374151;
+        }
+
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 6px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification.success {
+            background: #10b981;
+        }
+
+        .notification.error {
+            background: #ef4444;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                grid-template-columns: 1fr;
+                padding: 1rem;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .stats-bar {
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-logo">🚗</div>
+        <div class="loading-text">Initializing Advanced 3D Parking System...</div>
+        <div class="loading-bar">
+            <div class="loading-progress"></div>
+        </div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <h1><i class="fas fa-parking"></i> Advanced Parking Management</h1>
+            </div>
+            <div class="stats-bar">
+                <div class="stat">
+                    <div class="stat-label">Total Slots</div>
+                    <div class="stat-value" id="totalSlots">20</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Occupied</div>
+                    <div class="stat-value" id="occupiedSlots">0</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-label">Available</div>
+                    <div class="stat-value" id="availableSlots">20</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="control-panel">
+            <div class="control-section">
+                <h3><i class="fas fa-car"></i> Park Vehicle</h3>
+                <form id="parkForm">
+                    <div class="form-group">
+                        <label for="licensePlate">License Plate</label>
+                        <input type="text" id="licensePlate" placeholder="UP32AB1234" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleType">Vehicle Type</label>
+                        <select id="vehicleType" required>
+                            <option value="Car">Car</option>
+                            <option value="Motorcycle">Motorcycle</option>
+                            <option value="Truck">Truck</option>
+                            <option value="SUV">SUV</option>
+                            <option value="Van">Van</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Park Vehicle</button>
+                </form>
+            </div>
+            <div class="control-section">
+                <h3><i class="fas fa-sign-out-alt"></i> Release Vehicle</h3>
+                <form id="releaseForm">
+                    <div class="form-group">
+                        <label for="releaseLicensePlate">License Plate</label>
+                        <input type="text" id="releaseLicensePlate" placeholder="UP32AB1234" required>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Release Vehicle</button>
+                </form>
+            </div>
+            <div class="control-section">
+                <h3><i class="fas fa-search"></i> Find Vehicle</h3>
+                <form id="findForm">
+                    <div class="form-group">
+                        <label for="findLicensePlate">License Plate</label>
+                        <input type="text" id="findLicensePlate" placeholder="UP32AB1234" required>
+                    </div>
+                    <button type="submit" class="btn btn-info">Find Vehicle</button>
+                </form>
+                <div id="vehicleInfo" style="display: none; margin-top: 1rem; padding: 1rem; background: #f9fafb; border-radius: 6px; border-left: 3px solid #3b82f6;">
+                    <h4 style="margin-bottom: 0.5rem; color: #1f2937;">Vehicle Information</h4>
+                    <div id="vehicleDetails"></div>
+                </div>
+            </div>
+            <div class="control-section">
+                <h3><i class="fas fa-cogs"></i> Actions</h3>
+                <button id="loadDemoData" class="btn btn-info">Load Demo Data</button>
+                <button id="clearAll" class="btn btn-danger">Clear All Vehicles</button>
+            </div>
+        </div>
+        <div class="scene-container">
+            <h3><i class="fas fa-cube"></i> 3D Parking Visualization</h3>
+            <div id="threejs-container"></div>
+        </div>
+    </div>
+    <div class="activity-log">
+        <h3><i class="fas fa-history"></i> Recent Activity</h3>
+        <div id="activityLog">
+            <div class="activity-item">
+                <div class="activity-time">System Ready</div>
+                <div class="activity-text">Advanced 3D Parking Management System initialized</div>
+            </div>
+        </div>
+    </div>
+    <script src="https://unpkg.com/three@0.158.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/gsap@3.12.2/dist/gsap.min.js"></script>
+    
+    <script>
+        let threeJSSystem = null;
+        let parkingSystem = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing parking system...');
+            
+            parkingSystem = new ParkingSystem();
+            
+            initialize3D();
+        });
+
+        function initialize3D() {
+            console.log('Attempting to initialize 3D system...');
+            
+            if (typeof THREE !== 'undefined') {
+                console.log('Three.js loaded, creating 3D system...');
+                threeJSSystem = new ThreeJSParkingSystem();
+                hideLoadingScreen();
+            } else {
+                console.log('Three.js not loaded, retrying...');
+                setTimeout(initialize3D, 100);
+            }
+        }
+
+        // Hide loading screen
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            if (loadingScreen) {
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                }, 300);
+            }
+        }
+
+        // Parking System Class
+        class ParkingSystem {
+            constructor() {
+                this.parkedVehicles = new Map();
+                this.availableSlots = [];
+                this.totalSlots = 20;
+                this.initializeSlots();
+                this.loadData();
+                this.updateStats();
+                console.log('Parking system initialized');
+            }
+
+            initializeSlots() {
+                for (let i = 1; i <= this.totalSlots; i++) {
+                    this.availableSlots.push(i);
+                }
+            }
+
+            parkVehicle(licensePlate, vehicleType) {
+                if (this.availableSlots.length === 0) {
+                    this.showNotification('No available slots!', 'error');
+                    return false;
+                }
+
+                if (this.parkedVehicles.has(licensePlate)) {
+                    this.showNotification('Vehicle already parked!', 'error');
+                    return false;
+                }
+
+                const slotNumber = this.availableSlots.shift();
+                const entryTime = new Date();
+                
+                const vehicle = {
+                    licensePlate: licensePlate,
+                    vehicleType: vehicleType,
+                    slotNumber: slotNumber,
+                    entryTime: entryTime
+                };
+
+                this.parkedVehicles.set(licensePlate, vehicle);
+                this.saveData();
+                this.updateStats();
+                this.updateActivityLog(`Vehicle ${licensePlate} parked in slot ${slotNumber}`);
+
+                // Update 3D visualization
+                if (threeJSSystem) {
+                    threeJSSystem.parkVehicle(slotNumber, vehicleType, licensePlate);
+                }
+
+                this.showNotification(`Vehicle parked in slot ${slotNumber}`, 'success');
+                return true;
+            }
+
+            releaseVehicle(licensePlate) {
+                const vehicle = this.parkedVehicles.get(licensePlate);
+                if (!vehicle) {
+                    this.showNotification('Vehicle not found!', 'error');
+                    return false;
+                }
+
+                const fee = this.calculateFee(vehicle.entryTime, vehicle.vehicleType);
+                this.availableSlots.push(vehicle.slotNumber);
+                this.availableSlots.sort((a, b) => a - b);
+                this.parkedVehicles.delete(licensePlate);
+                this.saveData();
+                this.updateStats();
+                this.updateActivityLog(`Vehicle ${licensePlate} released from slot ${vehicle.slotNumber}`);
+
+                // Update 3D visualization
+                if (threeJSSystem) {
+                    threeJSSystem.releaseVehicle(vehicle.slotNumber);
+                }
+
+                this.showNotification(`Vehicle released. Fee: ₹${fee}`, 'success');
+                return true;
+            }
+
+            calculateFee(entryTime, vehicleType) {
+                const now = new Date();
+                const hours = (now - entryTime) / (1000 * 60 * 60);
+                
+                // Fixed rate of ₹20 per hour for all vehicle types
+                const baseRate = 20;
+                return Math.ceil(hours * baseRate);
+            }
+
+            updateStats() {
+                const occupiedSlots = this.parkedVehicles.size;
+                const availableSlots = this.totalSlots - occupiedSlots;
+                
+                document.getElementById('totalSlots').textContent = this.totalSlots;
+                document.getElementById('occupiedSlots').textContent = occupiedSlots;
+                document.getElementById('availableSlots').textContent = availableSlots;
+            }
+
+            updateActivityLog(message) {
+                const activityLog = document.getElementById('activityLog');
+                const activityItem = document.createElement('div');
+                activityItem.className = 'activity-item';
+                activityItem.innerHTML = `
+                    <div class="activity-time">${new Date().toLocaleTimeString()}</div>
+                    <div class="activity-text">${message}</div>
+                `;
+                activityLog.insertBefore(activityItem, activityLog.firstChild);
+            }
+
+            showNotification(message, type) {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+
+            saveData() {
+                const data = {
+                    parkedVehicles: Array.from(this.parkedVehicles.entries()),
+                    availableSlots: this.availableSlots
+                };
+                localStorage.setItem('parkingData', JSON.stringify(data));
+            }
+
+            loadData() {
+                const data = localStorage.getItem('parkingData');
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    this.parkedVehicles = new Map(parsed.parkedVehicles.map(([key, value]) => [key, {
+                        ...value,
+                        entryTime: new Date(value.entryTime)
+                    }]));
+                    this.availableSlots = parsed.availableSlots || [];
+                }
+            }
+
+            loadDemoData() {
+                const demoVehicles = [
+                    { plate: 'UP32AB1234', type: 'Car', hoursAgo: 2 },
+                    { plate: 'UP32CD5678', type: 'Motorcycle', hoursAgo: 0.5 },
+                    { plate: 'UP32EF9012', type: 'Truck', hoursAgo: 4 },
+                    { plate: 'UP32GH3456', type: 'SUV', hoursAgo: 1.5 },
+                    { plate: 'UP32IJ7890', type: 'Van', hoursAgo: 3 },
+                    { plate: 'UP32KL1234', type: 'Car', hoursAgo: 1 },
+                    { plate: 'UP32MN5678', type: 'Motorcycle', hoursAgo: 2.5 },
+                    { plate: 'UP32OP9012', type: 'Truck', hoursAgo: 0.8 },
+                    { plate: 'UP32QR3456', type: 'SUV', hoursAgo: 3.2 },
+                    { plate: 'UP32ST7890', type: 'Van', hoursAgo: 1.8 },
+                    { plate: 'UP32UV1234', type: 'Car', hoursAgo: 0.3 },
+                    { plate: 'UP32WX5678', type: 'Motorcycle', hoursAgo: 4.5 },
+                    { plate: 'UP32YZ9012', type: 'Truck', hoursAgo: 2.2 },
+                    { plate: 'UP32AA3456', type: 'SUV', hoursAgo: 0.7 },
+                    { plate: 'UP32BB7890', type: 'Van', hoursAgo: 3.8 }
+                ];
+
+                // Check if ALL demo vehicles already exist
+                const existingDemoVehicles = demoVehicles.filter(vehicle => 
+                    this.parkedVehicles.has(vehicle.plate)
+                );
+
+                if (existingDemoVehicles.length === demoVehicles.length) {
+                    this.showNotification('All demo vehicles already loaded! Use "Clear All" then "Load Demo Data" to refresh them.', 'error');
+                    return;
+                }
+
+                // Load only vehicles that aren't already parked
+                const vehiclesToLoad = demoVehicles.filter(vehicle => 
+                    !this.parkedVehicles.has(vehicle.plate)
+                ).slice(0, this.availableSlots.length);
+                
+                if (vehiclesToLoad.length === 0) {
+                    if (this.availableSlots.length === 0) {
+                        this.showNotification('No available slots for demo data!', 'error');
+                    } else {
+                        this.showNotification('All demo vehicles already loaded!', 'error');
+                    }
+                    return;
+                }
+
+                if (vehiclesToLoad.length < demoVehicles.length) {
+                    this.showNotification(`Loading ${vehiclesToLoad.length} more demo vehicles...`, 'success');
+                } else {
+                    this.showNotification('Loading demo data with different durations...', 'success');
+                }
+                
+                vehiclesToLoad.forEach((vehicle, index) => {
+                    setTimeout(() => {
+                        this.parkVehicleWithCustomTime(vehicle.plate, vehicle.type, vehicle.hoursAgo);
+                    }, index * 500);
+                });
+            }
+
+            parkVehicleWithCustomTime(licensePlate, vehicleType, hoursAgo) {
+                if (this.availableSlots.length === 0) {
+                    this.showNotification('No available slots!', 'error');
+                    return false;
+                }
+
+                if (this.parkedVehicles.has(licensePlate)) {
+                    this.showNotification('Vehicle already parked!', 'error');
+                    return false;
+                }
+
+                const slotNumber = this.availableSlots.shift();
+                // Create entry time that was 'hoursAgo' hours in the past
+                const entryTime = new Date(Date.now() - (hoursAgo * 60 * 60 * 1000));
+                
+                const vehicle = {
+                    licensePlate: licensePlate,
+                    vehicleType: vehicleType,
+                    slotNumber: slotNumber,
+                    entryTime: entryTime
+                };
+
+                this.parkedVehicles.set(licensePlate, vehicle);
+                this.saveData();
+                this.updateStats();
+                this.updateActivityLog(`Vehicle ${licensePlate} parked in slot ${slotNumber} (${hoursAgo}h ago)`);
+
+                // Update 3D visualization
+                if (threeJSSystem) {
+                    threeJSSystem.parkVehicle(slotNumber, vehicleType, licensePlate);
+                }
+
+                this.showNotification(`Vehicle parked in slot ${slotNumber}`, 'success');
+                return true;
+            }
+
+            clearAllVehicles() {
+                // Clear 3D visualization first
+                if (threeJSSystem) {
+                    // Remove all vehicles from 3D scene
+                    for (let slotNumber = 1; slotNumber <= this.totalSlots; slotNumber++) {
+                        threeJSSystem.releaseVehicle(slotNumber);
+                    }
+                }
+                
+                this.parkedVehicles.clear();
+                this.availableSlots = [];
+                this.initializeSlots();
+                this.saveData();
+                this.updateStats();
+                this.updateActivityLog('All vehicles cleared');
+                this.showNotification('All vehicles cleared', 'success');
+            }
+
+            findVehicle(licensePlate) {
+                const vehicle = this.parkedVehicles.get(licensePlate.toUpperCase());
+                if (!vehicle) {
+                    this.showNotification('Vehicle not found!', 'error');
+                    this.hideVehicleInfo();
+                    return false;
+                }
+
+                this.showVehicleInfo(vehicle);
+                this.updateActivityLog(`Vehicle ${licensePlate} found in slot ${vehicle.slotNumber}`);
+                return true;
+            }
+
+            showVehicleInfo(vehicle) {
+                const vehicleInfo = document.getElementById('vehicleInfo');
+                const vehicleDetails = document.getElementById('vehicleDetails');
+                
+                const entryTime = new Date(vehicle.entryTime);
+                const currentTime = new Date();
+                const hours = Math.floor((currentTime - entryTime) / (1000 * 60 * 60));
+                const minutes = Math.floor(((currentTime - entryTime) % (1000 * 60 * 60)) / (1000 * 60));
+                const fee = this.calculateFee(vehicle.entryTime, vehicle.vehicleType);
+
+                vehicleDetails.innerHTML = `
+                    <div style="margin-bottom: 0.5rem;"><strong>License Plate:</strong> ${vehicle.licensePlate}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>Vehicle Type:</strong> ${vehicle.vehicleType}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>Slot Number:</strong> ${vehicle.slotNumber}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>Entry Time:</strong> ${entryTime.toLocaleString()}</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>Duration:</strong> ${hours}h ${minutes}m</div>
+                    <div style="margin-bottom: 0.5rem;"><strong>Current Fee:</strong> ₹${fee}</div>
+                `;
+                
+                vehicleInfo.style.display = 'block';
+            }
+
+            hideVehicleInfo() {
+                const vehicleInfo = document.getElementById('vehicleInfo');
+                vehicleInfo.style.display = 'none';
+            }
+
+        }
+
+        // Three.js Parking System Class
+        class ThreeJSParkingSystem {
+            constructor() {
+                this.scene = null;
+                this.camera = null;
+                this.renderer = null;
+                this.parkingSlots = [];
+                this.vehicles = new Map();
+                this.animationId = null;
+                
+                this.init();
+            }
+
+            init() {
+                const container = document.getElementById('threejs-container');
+                if (!container) return;
+
+                // Create scene
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0xf8fafc);
+                this.scene.fog = new THREE.Fog(0xf8fafc, 50, 200);
+
+                // Create camera
+                this.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+                this.camera.position.set(15, 10, 15);
+                this.camera.lookAt(0, 0, 0);
+
+                // Create renderer
+                this.renderer = new THREE.WebGLRenderer({ antialias: true });
+                this.renderer.setSize(container.clientWidth, container.clientHeight);
+                this.renderer.shadowMap.enabled = true;
+                this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                container.appendChild(this.renderer.domElement);
+
+                // Create parking lot
+                this.createParkingLot();
+                this.createLights();
+                this.animate();
+
+                console.log('3D Parking system initialized');
+            }
+
+            createParkingLot() {
+                // Ground with texture
+                const groundGeometry = new THREE.PlaneGeometry(50, 40);
+                const groundMaterial = new THREE.MeshLambertMaterial({ 
+                    color: 0x2c2c2c,
+                    transparent: true,
+                    opacity: 0.9
+                });
+                const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+                ground.rotation.x = -Math.PI / 2;
+                ground.receiveShadow = true;
+                this.scene.add(ground);
+
+                // Asphalt parking area
+                const parkingGeometry = new THREE.PlaneGeometry(35, 25);
+                const parkingMaterial = new THREE.MeshLambertMaterial({ 
+                    color: 0x1a1a1a,
+                    transparent: true,
+                    opacity: 0.95
+                });
+                const parkingArea = new THREE.Mesh(parkingGeometry, parkingMaterial);
+                parkingArea.rotation.x = -Math.PI / 2;
+                parkingArea.position.y = 0.01;
+                parkingArea.receiveShadow = true;
+                this.scene.add(parkingArea);
+
+                // Add parking lines
+                this.createParkingLines();
+                
+                // Create parking slots
+                this.createParkingSlots();
+                
+                // Add environment
+                this.createEnvironment();
+            }
+
+            createParkingSlots() {
+                const rows = 4;
+                const cols = 5;
+                const slotWidth = 6;
+                const slotHeight = 4;
+                const startX = -12;
+                const startZ = -8;
+
+                for (let row = 0; row < rows; row++) {
+                    for (let col = 0; col < cols; col++) {
+                        const slotNumber = row * cols + col + 1;
+                        const x = startX + col * slotWidth;
+                        const z = startZ + row * slotHeight;
+
+                        this.createParkingSlot(x, z, slotNumber);
+                    }
+                }
+            }
+
+            createParkingSlot(x, z, slotNumber) {
+                const group = new THREE.Group();
+                
+                // Realistic parking slot with white lines
+                const slotGeometry = new THREE.PlaneGeometry(5.5, 3.5);
+                const slotMaterial = new THREE.MeshLambertMaterial({ 
+                    color: 0x1a1a1a,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const slotBase = new THREE.Mesh(slotGeometry, slotMaterial);
+                slotBase.rotation.x = -Math.PI / 2;
+                slotBase.position.y = 0.02;
+                group.add(slotBase);
+
+                // White parking lines
+                this.createParkingSlotLines(group, slotNumber);
+
+                // Slot number
+                this.addSlotNumber(group, slotNumber);
+
+                group.position.set(x, 0, z);
+                this.scene.add(group);
+                this.parkingSlots[slotNumber] = group;
+            }
+
+            addSlotNumber(group, slotNumber) {
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = 64;
+                canvas.height = 64;
+                
+                context.fillStyle = '#ffffff';
+                context.font = 'bold 20px Arial';
+                context.textAlign = 'center';
+                context.textBaseline = 'middle';
+                context.fillText(slotNumber.toString(), 32, 32);
+
+                const texture = new THREE.CanvasTexture(canvas);
+                const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+                const geometry = new THREE.PlaneGeometry(0.8, 0.8);
+                const numberPlane = new THREE.Mesh(geometry, material);
+                numberPlane.rotation.x = -Math.PI / 2;
+                numberPlane.position.y = 0.04;
+                group.add(numberPlane);
+            }
+
+            createParkingSlotLines(group, slotNumber) {
+                const lineMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
+                
+                // Front line
+                const frontLineGeometry = new THREE.PlaneGeometry(5.5, 0.1);
+                const frontLine = new THREE.Mesh(frontLineGeometry, lineMaterial);
+                frontLine.rotation.x = -Math.PI / 2;
+                frontLine.position.set(0, 0.03, 1.7);
+                group.add(frontLine);
+                
+                // Back line
+                const backLineGeometry = new THREE.PlaneGeometry(5.5, 0.1);
+                const backLine = new THREE.Mesh(backLineGeometry, lineMaterial);
+                backLine.rotation.x = -Math.PI / 2;
+                backLine.position.set(0, 0.03, -1.7);
+                group.add(backLine);
+                
+                // Left line
+                const leftLineGeometry = new THREE.PlaneGeometry(0.1, 3.5);
+                const leftLine = new THREE.Mesh(leftLineGeometry, lineMaterial);
+                leftLine.rotation.x = -Math.PI / 2;
+                leftLine.position.set(-2.7, 0.03, 0);
+                group.add(leftLine);
+                
+                // Right line
+                const rightLineGeometry = new THREE.PlaneGeometry(0.1, 3.5);
+                const rightLine = new THREE.Mesh(rightLineGeometry, lineMaterial);
+                rightLine.rotation.x = -Math.PI / 2;
+                rightLine.position.set(2.7, 0.03, 0);
+                group.add(rightLine);
+            }
+
+            createParkingLines() {
+                const lineMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
+                
+                // Horizontal lines between rows
+                for (let i = 0; i < 3; i++) {
+                    const lineGeometry = new THREE.PlaneGeometry(30, 0.2);
+                    const line = new THREE.Mesh(lineGeometry, lineMaterial);
+                    line.rotation.x = -Math.PI / 2;
+                    line.position.set(0, 0.03, -6 + i * 4);
+                    this.scene.add(line);
+                }
+                
+                // Vertical lines between columns
+                for (let i = 0; i < 4; i++) {
+                    const lineGeometry = new THREE.PlaneGeometry(0.2, 16);
+                    const line = new THREE.Mesh(lineGeometry, lineMaterial);
+                    line.rotation.x = -Math.PI / 2;
+                    line.position.set(-9 + i * 6, 0.03, 0);
+                    this.scene.add(line);
+                }
+            }
+
+            createEnvironment() {
+                // Add some trees around the parking lot
+                for (let i = 0; i < 8; i++) {
+                    const tree = this.createTree();
+                    const angle = (i / 8) * Math.PI * 2;
+                    const radius = 25;
+                    tree.position.set(
+                        Math.cos(angle) * radius,
+                        0,
+                        Math.sin(angle) * radius
+                    );
+                    this.scene.add(tree);
+                }
+                
+                // Add street lights
+                for (let i = 0; i < 6; i++) {
+                    const light = this.createStreetLight();
+                    light.position.set(-15 + i * 6, 0, -12);
+                    this.scene.add(light);
+                }
+            }
+
+            createTree() {
+                const group = new THREE.Group();
+                
+                // Trunk
+                const trunkGeometry = new THREE.CylinderGeometry(0.3, 0.4, 3, 8);
+                const trunkMaterial = new THREE.MeshLambertMaterial({ color: 0x8B4513 });
+                const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
+                trunk.position.y = 1.5;
+                trunk.castShadow = true;
+                group.add(trunk);
+                
+                // Foliage
+                const foliageGeometry = new THREE.SphereGeometry(2, 8, 6);
+                const foliageMaterial = new THREE.MeshLambertMaterial({ color: 0x228B22 });
+                const foliage = new THREE.Mesh(foliageGeometry, foliageMaterial);
+                foliage.position.y = 4;
+                foliage.castShadow = true;
+                group.add(foliage);
+                
+                return group;
+            }
+
+            createStreetLight() {
+                const group = new THREE.Group();
+                
+                // Pole
+                const poleGeometry = new THREE.CylinderGeometry(0.1, 0.1, 6, 8);
+                const poleMaterial = new THREE.MeshLambertMaterial({ color: 0x696969 });
+                const pole = new THREE.Mesh(poleGeometry, poleMaterial);
+                pole.position.y = 3;
+                pole.castShadow = true;
+                group.add(pole);
+                
+                // Light
+                const lightGeometry = new THREE.SphereGeometry(0.3, 8, 6);
+                const lightMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0xffffaa,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                const light = new THREE.Mesh(lightGeometry, lightMaterial);
+                light.position.y = 6;
+                group.add(light);
+                
+                // Add actual light
+                const pointLight = new THREE.PointLight(0xffffaa, 0.5, 20);
+                pointLight.position.set(0, 6, 0);
+                pointLight.castShadow = true;
+                group.add(pointLight);
+                
+                return group;
+            }
+
+            createLights() {
+                // Ambient light
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.4);
+                this.scene.add(ambientLight);
+
+                // Directional light (sun)
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1.2);
+                directionalLight.position.set(20, 25, 10);
+                directionalLight.castShadow = true;
+                directionalLight.shadow.mapSize.width = 4096;
+                directionalLight.shadow.mapSize.height = 4096;
+                directionalLight.shadow.camera.near = 0.5;
+                directionalLight.shadow.camera.far = 50;
+                directionalLight.shadow.camera.left = -25;
+                directionalLight.shadow.camera.right = 25;
+                directionalLight.shadow.camera.top = 25;
+                directionalLight.shadow.camera.bottom = -25;
+                this.scene.add(directionalLight);
+
+                // Fill light
+                const fillLight = new THREE.DirectionalLight(0x87ceeb, 0.3);
+                fillLight.position.set(-10, 10, -10);
+                this.scene.add(fillLight);
+            }
+
+            parkVehicle(slotNumber, vehicleType, licensePlate) {
+                if (this.parkingSlots[slotNumber]) {
+                    const vehicle = this.createVehicle(vehicleType);
+                    if (vehicle) {
+                        this.vehicles.set(slotNumber, vehicle);
+                        this.parkingSlots[slotNumber].add(vehicle);
+                        this.animateVehicleParking(vehicle);
+                    }
+                }
+            }
+
+            releaseVehicle(slotNumber) {
+                const vehicle = this.vehicles.get(slotNumber);
+                if (vehicle && this.parkingSlots[slotNumber]) {
+                    this.animateVehicleLeaving(vehicle, () => {
+                        this.parkingSlots[slotNumber].remove(vehicle);
+                        this.vehicles.delete(slotNumber);
+                    });
+                }
+            }
+
+            createVehicle(type) {
+                const group = new THREE.Group();
+                
+                switch(type) {
+                    case 'Car':
+                        this.createCar(group);
+                        break;
+                    case 'Motorcycle':
+                        this.createMotorcycle(group);
+                        break;
+                    case 'Truck':
+                        this.createTruck(group);
+                        break;
+                    case 'SUV':
+                        this.createSUV(group);
+                        break;
+                    case 'Van':
+                        this.createVan(group);
+                        break;
+                    default:
+                        this.createCar(group);
+                }
+
+                return group;
+            }
+
+            createCar(group) {
+                // Main car body - more realistic proportions
+                const bodyGeometry = new THREE.BoxGeometry(4.2, 1.4, 2.2);
+                const bodyMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x3b82f6,
+                    shininess: 100,
+                    specular: 0x222222
+                });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 0.7;
+                body.castShadow = true;
+                body.receiveShadow = true;
+                group.add(body);
+
+                // Car roof - more realistic shape
+                const roofGeometry = new THREE.BoxGeometry(2.8, 0.9, 1.8);
+                const roofMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x2563eb,
+                    shininess: 120,
+                    specular: 0x333333
+                });
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.set(0, 1.6, 0);
+                roof.castShadow = true;
+                roof.receiveShadow = true;
+                group.add(roof);
+
+                // Front windshield
+                const frontWindshieldGeometry = new THREE.BoxGeometry(0.1, 0.8, 1.6);
+                const windshieldMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x87ceeb, 
+                    transparent: true, 
+                    opacity: 0.6,
+                    shininess: 200
+                });
+                const frontWindshield = new THREE.Mesh(frontWindshieldGeometry, windshieldMaterial);
+                frontWindshield.position.set(1.3, 1.6, 0);
+                group.add(frontWindshield);
+
+                // Rear windshield
+                const rearWindshield = new THREE.Mesh(frontWindshieldGeometry, windshieldMaterial);
+                rearWindshield.position.set(-1.3, 1.6, 0);
+                group.add(rearWindshield);
+
+                // Side windows
+                const sideWindowGeometry = new THREE.BoxGeometry(2.6, 0.6, 0.1);
+                const sideWindow = new THREE.Mesh(sideWindowGeometry, windshieldMaterial);
+                sideWindow.position.set(0, 1.6, 0.9);
+                group.add(sideWindow);
+
+                const sideWindow2 = new THREE.Mesh(sideWindowGeometry, windshieldMaterial);
+                sideWindow2.position.set(0, 1.6, -0.9);
+                group.add(sideWindow2);
+
+                // Headlights
+                this.addHeadlights(group, 0.2, 0.15, 0.8);
+                
+                // Taillights
+                this.addTaillights(group, 0.2, 0.15, 0.8);
+
+                // Wheels with more detail
+                this.addRealisticWheels(group, 0.35, 0.25, 0.9);
+            }
+
+            createMotorcycle(group) {
+                // Main body - more realistic shape
+                const bodyGeometry = new THREE.BoxGeometry(2.2, 0.7, 0.9);
+                const bodyMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xef4444,
+                    shininess: 120,
+                    specular: 0x333333
+                });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 0.35;
+                body.castShadow = true;
+                body.receiveShadow = true;
+                group.add(body);
+
+                // Fuel tank
+                const tankGeometry = new THREE.BoxGeometry(0.8, 0.4, 0.6);
+                const tankMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xcc3333,
+                    shininess: 150,
+                    specular: 0x444444
+                });
+                const tank = new THREE.Mesh(tankGeometry, tankMaterial);
+                tank.position.set(0.3, 0.8, 0);
+                tank.castShadow = true;
+                group.add(tank);
+
+                // Seat
+                const seatGeometry = new THREE.BoxGeometry(1.2, 0.15, 0.7);
+                const seatMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x1f2937,
+                    shininess: 80
+                });
+                const seat = new THREE.Mesh(seatGeometry, seatMaterial);
+                seat.position.set(0, 0.75, 0);
+                group.add(seat);
+
+                // Handlebars
+                const handlebarGeometry = new THREE.BoxGeometry(1.6, 0.05, 0.05);
+                const handlebarMaterial = new THREE.MeshPhongMaterial({ color: 0x2c2c2c });
+                const handlebars = new THREE.Mesh(handlebarGeometry, handlebarMaterial);
+                handlebars.position.set(0, 1.1, 0);
+                group.add(handlebars);
+
+                // Wheels
+                this.addWheels(group, 0.4, 0.15, 0.6);
+            }
+
+            createTruck(group) {
+                // Truck cab - more detailed
+                const cabGeometry = new THREE.BoxGeometry(2.8, 2.2, 2.2);
+                const cabMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x10b981,
+                    shininess: 100,
+                    specular: 0x333333
+                });
+                const cab = new THREE.Mesh(cabGeometry, cabMaterial);
+                cab.position.set(-0.6, 1.1, 0);
+                cab.castShadow = true;
+                cab.receiveShadow = true;
+                group.add(cab);
+
+                // Cab windshield
+                const cabWindshieldGeometry = new THREE.BoxGeometry(0.1, 1.2, 1.8);
+                const windshieldMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x87ceeb, 
+                    transparent: true, 
+                    opacity: 0.6,
+                    shininess: 200
+                });
+                const cabWindshield = new THREE.Mesh(cabWindshieldGeometry, windshieldMaterial);
+                cabWindshield.position.set(-1.3, 1.1, 0);
+                group.add(cabWindshield);
+
+                // Truck trailer
+                const trailerGeometry = new THREE.BoxGeometry(3.5, 2, 2.2);
+                const trailerMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x059669,
+                    shininess: 80,
+                    specular: 0x222222
+                });
+                const trailer = new THREE.Mesh(trailerGeometry, trailerMaterial);
+                trailer.position.set(1.7, 1, 0);
+                trailer.castShadow = true;
+                trailer.receiveShadow = true;
+                group.add(trailer);
+
+                // Trailer doors
+                const doorGeometry = new THREE.BoxGeometry(0.1, 1.8, 2.2);
+                const doorMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x047857,
+                    shininess: 120
+                });
+                const doors = new THREE.Mesh(doorGeometry, doorMaterial);
+                doors.position.set(3.4, 1, 0);
+                group.add(doors);
+
+                // Headlights
+                this.addHeadlights(group, 0.25, 0.2, 1.0);
+                
+                // Taillights
+                this.addTaillights(group, 0.25, 0.2, 1.0);
+
+                // Wheels
+                this.addRealisticWheels(group, 0.5, 0.35, 1.2);
+            }
+
+            createSUV(group) {
+                // SUV body - more realistic proportions
+                const bodyGeometry = new THREE.BoxGeometry(4.5, 2, 2.4);
+                const bodyMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xf59e0b,
+                    shininess: 120,
+                    specular: 0x444444
+                });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 1;
+                body.castShadow = true;
+                body.receiveShadow = true;
+                group.add(body);
+
+                // SUV roof
+                const roofGeometry = new THREE.BoxGeometry(3.5, 1.2, 2);
+                const roofMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xe67e22,
+                    shininess: 150,
+                    specular: 0x555555
+                });
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.set(0, 1.8, 0);
+                roof.castShadow = true;
+                group.add(roof);
+
+                // Front windshield
+                const frontWindshieldGeometry = new THREE.BoxGeometry(0.1, 1.2, 1.8);
+                const windshieldMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x87ceeb, 
+                    transparent: true, 
+                    opacity: 0.6,
+                    shininess: 200
+                });
+                const frontWindshield = new THREE.Mesh(frontWindshieldGeometry, windshieldMaterial);
+                frontWindshield.position.set(2.1, 1.8, 0);
+                group.add(frontWindshield);
+
+                // Side windows
+                const sideWindowGeometry = new THREE.BoxGeometry(3.3, 1, 0.1);
+                const sideWindow = new THREE.Mesh(sideWindowGeometry, windshieldMaterial);
+                sideWindow.position.set(0, 1.8, 1.1);
+                group.add(sideWindow);
+
+                const sideWindow2 = new THREE.Mesh(sideWindowGeometry, windshieldMaterial);
+                sideWindow2.position.set(0, 1.8, -1.1);
+                group.add(sideWindow2);
+
+                // Headlights
+                this.addHeadlights(group, 0.25, 0.2, 1.1);
+                
+                // Taillights
+                this.addTaillights(group, 0.25, 0.2, 1.1);
+
+                // Wheels
+                this.addRealisticWheels(group, 0.45, 0.3, 1.1);
+            }
+
+            createVan(group) {
+                // Van body - more detailed
+                const bodyGeometry = new THREE.BoxGeometry(4.2, 2.4, 2.2);
+                const bodyMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x8b5cf6,
+                    shininess: 100,
+                    specular: 0x333333
+                });
+                const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+                body.position.y = 1.2;
+                body.castShadow = true;
+                body.receiveShadow = true;
+                group.add(body);
+
+                // Van roof
+                const roofGeometry = new THREE.BoxGeometry(3.8, 0.8, 2);
+                const roofMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x7c3aed,
+                    shininess: 120,
+                    specular: 0x444444
+                });
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.set(0, 2.2, 0);
+                roof.castShadow = true;
+                group.add(roof);
+
+                // Front windshield
+                const frontWindshieldGeometry = new THREE.BoxGeometry(0.1, 1.2, 1.8);
+                const windshieldMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x87ceeb, 
+                    transparent: true, 
+                    opacity: 0.6,
+                    shininess: 200
+                });
+                const frontWindshield = new THREE.Mesh(frontWindshieldGeometry, windshieldMaterial);
+                frontWindshield.position.set(2, 1.8, 0);
+                group.add(frontWindshield);
+
+                // Side windows (smaller for van)
+                const sideWindowGeometry = new THREE.BoxGeometry(1.5, 0.8, 0.1);
+                const sideWindow = new THREE.Mesh(sideWindowGeometry, windshieldMaterial);
+                sideWindow.position.set(-0.5, 1.8, 1.1);
+                group.add(sideWindow);
+
+                const sideWindow2 = new THREE.Mesh(sideWindowGeometry, windshieldMaterial);
+                sideWindow2.position.set(-0.5, 1.8, -1.1);
+                group.add(sideWindow2);
+
+                // Van doors
+                const doorGeometry = new THREE.BoxGeometry(0.1, 2.2, 1);
+                const doorMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x6d28d9,
+                    shininess: 80
+                });
+                const leftDoor = new THREE.Mesh(doorGeometry, doorMaterial);
+                leftDoor.position.set(0, 1.2, 1.1);
+                group.add(leftDoor);
+
+                const rightDoor = new THREE.Mesh(doorGeometry, doorMaterial);
+                rightDoor.position.set(0, 1.2, -1.1);
+                group.add(rightDoor);
+
+                // Headlights
+                this.addHeadlights(group, 0.2, 0.18, 1.0);
+                
+                // Taillights
+                this.addTaillights(group, 0.2, 0.18, 1.0);
+
+                // Wheels
+                this.addRealisticWheels(group, 0.4, 0.28, 1.0);
+            }
+
+            addWheels(group, radius, width, offset) {
+                const wheelGeometry = new THREE.CylinderGeometry(radius, radius, width, 8);
+                const wheelMaterial = new THREE.MeshLambertMaterial({ color: 0x1f2937 });
+                
+                // Front left wheel
+                const frontLeftWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                frontLeftWheel.rotation.z = Math.PI / 2;
+                frontLeftWheel.position.set(-1.5, radius, offset);
+                frontLeftWheel.castShadow = true;
+                group.add(frontLeftWheel);
+                
+                // Front right wheel
+                const frontRightWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                frontRightWheel.rotation.z = Math.PI / 2;
+                frontRightWheel.position.set(-1.5, radius, -offset);
+                frontRightWheel.castShadow = true;
+                group.add(frontRightWheel);
+                
+                // Rear left wheel
+                const rearLeftWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                rearLeftWheel.rotation.z = Math.PI / 2;
+                rearLeftWheel.position.set(1.5, radius, offset);
+                rearLeftWheel.castShadow = true;
+                group.add(rearLeftWheel);
+                
+                // Rear right wheel
+                const rearRightWheel = new THREE.Mesh(wheelGeometry, wheelMaterial);
+                rearRightWheel.rotation.z = Math.PI / 2;
+                rearRightWheel.position.set(1.5, radius, -offset);
+                rearRightWheel.castShadow = true;
+                group.add(rearRightWheel);
+            }
+
+            addRealisticWheels(group, radius, width, offset) {
+                // Wheel rim
+                const rimGeometry = new THREE.CylinderGeometry(radius, radius, width, 16);
+                const rimMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x2c2c2c,
+                    shininess: 150,
+                    specular: 0x444444
+                });
+                
+                // Tire
+                const tireGeometry = new THREE.CylinderGeometry(radius + 0.05, radius + 0.05, width + 0.02, 16);
+                const tireMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0x1a1a1a,
+                    shininess: 50
+                });
+                
+                // Wheel positions
+                const positions = [
+                    [-1.6, radius, offset],    // Front left
+                    [-1.6, radius, -offset],   // Front right
+                    [1.6, radius, offset],     // Rear left
+                    [1.6, radius, -offset]     // Rear right
+                ];
+                
+                positions.forEach(pos => {
+                    // Tire
+                    const tire = new THREE.Mesh(tireGeometry, tireMaterial);
+                    tire.rotation.z = Math.PI / 2;
+                    tire.position.set(pos[0], pos[1], pos[2]);
+                    tire.castShadow = true;
+                    group.add(tire);
+                    
+                    // Rim
+                    const rim = new THREE.Mesh(rimGeometry, rimMaterial);
+                    rim.rotation.z = Math.PI / 2;
+                    rim.position.set(pos[0], pos[1], pos[2]);
+                    rim.castShadow = true;
+                    group.add(rim);
+                });
+            }
+
+            addHeadlights(group, width, height, offset) {
+                const headlightGeometry = new THREE.SphereGeometry(0.15, 8, 6);
+                const headlightMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xffffaa,
+                    shininess: 200,
+                    emissive: 0x444422
+                });
+                
+                // Left headlight
+                const leftHeadlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
+                leftHeadlight.position.set(2.1, 0.8, offset);
+                group.add(leftHeadlight);
+                
+                // Right headlight
+                const rightHeadlight = new THREE.Mesh(headlightGeometry, headlightMaterial);
+                rightHeadlight.position.set(2.1, 0.8, -offset);
+                group.add(rightHeadlight);
+            }
+
+            addTaillights(group, width, height, offset) {
+                const taillightGeometry = new THREE.SphereGeometry(0.12, 8, 6);
+                const taillightMaterial = new THREE.MeshPhongMaterial({ 
+                    color: 0xff4444,
+                    shininess: 200,
+                    emissive: 0x440000
+                });
+                
+                // Left taillight
+                const leftTaillight = new THREE.Mesh(taillightGeometry, taillightMaterial);
+                leftTaillight.position.set(-2.1, 0.8, offset);
+                group.add(leftTaillight);
+                
+                // Right taillight
+                const rightTaillight = new THREE.Mesh(taillightGeometry, taillightMaterial);
+                rightTaillight.position.set(-2.1, 0.8, -offset);
+                group.add(rightTaillight);
+            }
+
+            animateVehicleParking(vehicle) {
+                vehicle.position.y = 5;
+                vehicle.position.x = -20;
+                
+                if (typeof gsap !== 'undefined') {
+                    gsap.to(vehicle.position, {
+                        duration: 2,
+                        y: 0.5,
+                        x: 0,
+                        ease: "power2.out"
+                    });
+                }
+            }
+
+            animateVehicleLeaving(vehicle, callback) {
+                if (typeof gsap !== 'undefined') {
+                    gsap.to(vehicle.position, {
+                        duration: 1.5,
+                        y: 5,
+                        x: 20,
+                        ease: "power2.in",
+                        onComplete: callback
+                    });
+                } else {
+                    callback();
+                }
+            }
+
+            animate() {
+                this.animationId = requestAnimationFrame(() => this.animate());
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Park vehicle form
+            document.getElementById('parkForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const licensePlate = document.getElementById('licensePlate').value;
+                const vehicleType = document.getElementById('vehicleType').value;
+                
+                if (parkingSystem) {
+                    parkingSystem.parkVehicle(licensePlate, vehicleType);
+                }
+                
+                this.reset();
+            });
+
+            // Release vehicle form
+            document.getElementById('releaseForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const licensePlate = document.getElementById('releaseLicensePlate').value;
+                
+                if (parkingSystem) {
+                    parkingSystem.releaseVehicle(licensePlate);
+                }
+                
+                this.reset();
+            });
+
+            // Find vehicle form
+            document.getElementById('findForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const licensePlate = document.getElementById('findLicensePlate').value;
+                
+                if (parkingSystem) {
+                    parkingSystem.findVehicle(licensePlate);
+                }
+                
+                this.reset();
+            });
+
+            // Demo data button
+            document.getElementById('loadDemoData').addEventListener('click', function() {
+                if (parkingSystem) {
+                    parkingSystem.loadDemoData();
+                }
+            });
+
+            // Clear all button
+            document.getElementById('clearAll').addEventListener('click', function() {
+                if (parkingSystem) {
+                    parkingSystem.clearAllVehicles();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
